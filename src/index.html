@@ -149,7 +149,7 @@
           const sum_array = array[i + 1].split(" ");
           // Remove RON text
           sum_array.pop();
-          const sum = sum_array.pop().replaceAll(",", ".");
+          const sum = sum_array.pop();
           const type = sum_array.join(" ");
           transactions.push({
             date,
