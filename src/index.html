@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pluxee 2 CSV</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <h1>Pluxee CSV Converter</h1>
+    <div class="input">
+      <h2>Input</h2>
+      <textarea id="text"></textarea>
+    </div>
+
+    <button onclick="download()" id="download" disabled>Download</button>
+    <h2 id="error" hidden>Something went wrong while parsing your input...</h2>
+
+    <div class="transactions"></div>
+  </body>
+
+  <style>
+    :root {
+      --border-radius: 10px;
+      --button-green: rgba(29, 255, 78, 0.801);
+      --button-green-hover: rgba(32, 212, 71, 0.842);
+      --table-background-second: rgba(0, 0, 0, 0.068);
+    }
+
+    body {
+      font-family: "Roboto", sans-serif;
+      font-optical-sizing: auto;
+      font-style: normal;
+      font-variation-settings: "wdth" 100;
+      display: flex;
+      flex-direction: column;
+      text-align: center;
+      align-items: center;
+      background: radial-gradient(
+        circle,
+        rgba(238, 174, 202, 1) 0%,
+        rgba(148, 187, 233, 1) 100%
+      );
+      height: 100vh;
+    }
+
+    h1 {
+      margin: 50px;
+      font-size: 2em;
+    }
+
+    #error {
+      color: rgb(255, 36, 36);
+    }
+
+    textarea {
+      opacity: 0.5;
+      width: 90vw;
+      height: 200px;
+      padding: 15px;
+      resize: none;
+      border-radius: var(--border-radius);
+      box-sizing: border-box;
+      border: black solid 2px;
+    }
+
+    button {
+      width: 50vw;
+      margin: 10px 0 10px;
+      border-radius: var(--border-radius);
+      min-height: 50px;
+      font-size: 2em;
+      background: var(--button-green);
+      transition: ease 0.15s;
+      color: black;
+      border: 2px solid black;
+    }
+
+    button:hover {
+      cursor: pointer;
+      background: var(--button-green-hover);
+    }
+
+    [disabled]:hover {
+      cursor: not-allowed;
+    }
+
+    .transactions {
+      width: 95vw;
+    }
+
+    table {
+      width: 100%;
+      font-size: 1.3em;
+      border: 2px solid black;
+      border-radius: calc(var(--border-radius) + 10px);
+      margin-bottom: 15px;
+    }
+
+    th {
+      border-left: 1px solid black;
+      border-bottom: 1px solid black;
+    }
+
+    th:first-child {
+      border-left: none;
+    }
+
+    tr:first-child th {
+      border-bottom: 3px solid black;
+    }
+
+    tr:last-child th {
+      border-bottom: none;
+    }
+
+    tr:nth-child(2n) {
+      background-color: var(--table-background-second);
+    }
+  </style>
+  <script>
+    let transactions = [];
+    const transactions_div = document.querySelector(".transactions");
+    document.querySelector("#text").addEventListener("keyup", convert);
+
+    function convert() {
+      transactions = [];
+      transactions_div.innerHTML = "";
+      /** @type string */
+      const toConvert = document.querySelector("#text").value;
+      if (toConvert.length < 1) return check();
+
+      try {
+        const array = toConvert.trim().split("\n");
+        if (array[0].includes("Data")) {
+          array.shift();
+        }
+
+        for (let i = 0; i < array.length; i += 2) {
+          const [, merchant] = array[i].match(/ [\A-z ]+/g);
+          const date = array[i].split(merchant).shift();
+
+          const sum_array = array[i + 1].split(" ");
+          // Remove RON text
+          sum_array.pop();
+          const sum = sum_array.pop().replaceAll(",", ".");
+          const type = sum_array.join(" ");
+          transactions.push({
+            date,
+            merchant,
+            sum,
+            type,
+          });
+        }
+        transactions_div.children = 0;
+
+        if (transactions.length) {
+          const table = document.createElement("table");
+          const trType = document.createElement("tr");
+          const date = document.createElement("th");
+          date.textContent = "Date";
+          const merchant = document.createElement("th");
+          merchant.textContent = "Merchant";
+          const sum = document.createElement("th");
+          sum.textContent = "Sum";
+          const type = document.createElement("th");
+          type.textContent = "Type";
+
+          trType.append(date, merchant, sum, type);
+          table.appendChild(trType);
+
+          transactions.forEach((transaction) => {
+            const tr = document.createElement("tr");
+            const date = document.createElement("th");
+            date.innerText = transaction.date;
+            const merchant = document.createElement("th");
+            merchant.innerText = transaction.merchant;
+            const sum = document.createElement("th");
+            sum.innerText = transaction.sum;
+            const type = document.createElement("th");
+            type.innerText = transaction.type;
+
+            tr.append(date, merchant, sum, type);
+            table.appendChild(tr);
+          });
+
+          transactions_div.appendChild(table);
+        }
+        check();
+      } catch (err) {
+        document.querySelector("#error").hidden = false;
+      }
+    }
+
+    function download() {
+      const content =
+        "data:text/csv;charset=utf-8,\n" +
+        "Date,Merchant,Sum,Type\n" +
+        transactions
+          .map(
+            (transaction) =>
+              `${transaction.date},${transaction.merchant},${transaction.sum},${transaction.type}`,
+          )
+          .join("\n");
+      const encoded = encodeURI(content);
+      const dl = document.createElement("a");
+      dl.href = encoded;
+      dl.setAttribute("download", "pluxee.csv");
+      dl.click();
+    }
+
+    function check() {
+      document.querySelector("#error").hidden = true;
+      document.querySelector("#download").disabled =
+        !transactions_div.childNodes.length;
+    }
+  </script>
+</html>
