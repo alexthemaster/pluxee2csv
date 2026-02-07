@@ -137,7 +137,10 @@
       if (toConvert.length < 1) return check();
 
       try {
-        const array = toConvert.trim().split("\n");
+        const array = toConvert
+          .trim()
+          .split("\n")
+          .filter((line) => line.length);
         if (array[0].includes("Data")) {
           array.shift();
         }
