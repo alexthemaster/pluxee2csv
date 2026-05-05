@@ -141,18 +141,18 @@
           .trim()
           .split("\n")
           .filter((line) => line.length);
-        if (array[0].includes("Data")) {
+        if (array[0].includes("Data") || array[0].includes("Date")) {
           array.shift();
         }
 
         for (let i = 0; i < array.length; i += 2) {
-          const [, merchant] = array[i].match(/ [\A-z ]+/g);
-          const date = array[i].split(merchant).shift();
+          const [merchant] = array[i].match(/ [\A-z ]+/g);
+          const dateJS = new Date(array[i].split(merchant).shift());
+          const date = `${dateJS.getDate()}.${dateJS.getMonth()}.${dateJS.getFullYear()}`;
 
           const sum_array = array[i + 1].split(" ");
-          // Remove RON text
-          sum_array.pop();
           const sum = sum_array.pop();
+          sum_array.pop();
           const type = sum_array.join(" ");
           transactions.push({
             date,
