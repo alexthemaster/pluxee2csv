@@ -148,7 +148,7 @@
         for (let i = 0; i < array.length; i += 2) {
           const [merchant] = array[i].match(/ [\A-z ]+/g);
           const dateJS = new Date(array[i].split(merchant).shift());
-          const date = `${dateJS.getDate()}.${dateJS.getMonth()}.${dateJS.getFullYear()}`;
+          const date = `${dateJS.getDate()}.${dateJS.getMonth() + 1}.${dateJS.getFullYear()}`;
 
           const sum_array = array[i + 1].split(" ");
           const sum = sum_array.pop();
@@ -184,8 +184,13 @@
             date.innerText = transaction.date;
             const merchant = document.createElement("th");
             merchant.innerText = transaction.merchant;
+
             const sum = document.createElement("th");
-            sum.innerText = transaction.sum;
+            sum.innerText = -transaction.sum;
+            console.log(transaction.type.toLowerCase().includes("topup"));
+            if (transaction.type.toLowerCase().includes("topup"))
+              sum.innerText = transaction.sum;
+
             const type = document.createElement("th");
             type.innerText = transaction.type;
 
